@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script>
+		let message='It works';
+		// Running any complex calculation in javascript will stop DOM from rendering or user events due to event loop blocking.
+		function blockingDOM(){
+			let i = 0;
+
+			let start = Date.now();
+
+			function count() {
+				// some heavy job here
+				for (let j = 0; j < 1e9; j++) {
+					i++;
+				}
+				alert("Task took " + (Date.now() - start) + 'ms');
+				message="This has been blocked by javascript complex task";
+			}
+			count();
+		}
+		
+		// Splitting the job into chunks for non-blocking user events
+		// Now DOM will be rendered after execution of first chunk.
+		// This will not block user interface from loading
+		function nonblockingDOM(){
+			let i = 0;
+			message="It works, once first chunk of complex task runs, engine sleeps(setTimeout) and renders the dom as priority";
+			let start = Date.now();
+
+			function count() {
+			  // move the scheduling at the beginning
+			  if (i < 1e9 - 1e6) {
+			    setTimeout(count); // schedule the new call
+			  }
+			  do {
+			    i++;
+			  } while (i % 1e6 != 0);
+
+			  if (i == 1e9) {
+			    alert("Done in " + (Date.now() - start) + 'ms');
+			  }
+			}
+			count();
+		}
+
+		function checkPromise(){
+			console.log('script start');
+			setTimeout(function () {
+				console.log('setTimeout');
+			}, 0);
+
+			Promise.resolve().then(function () {
+				console.log('promise1');
+			}).then(function () {
+				console.log('promise2');
+			});
+
+			console.log('script end');
+		}
+		function checkBlocking(){
+			var para=document.createElement("P");
+			para.innerText=message;
+			document.body.appendChild(para);
+		}
+		</script>
+		<style>
+		button {
+			display:inline-block;padding: 10px 20px;
+		    background: #2196F3;
+		    color: white;
+		    cursor: pointer;
+		    border: none;font-size:16px;margin:30px;
+		}
+		</style>
+	</head>
+	<body>
+		<button onclick="blockingDOM()">Test blocking DOM</button><br>
+    <button onclick="nonblockingDOM()">Test non-blocking DOM</button><br>
+		<button onclick="checkPromise()">Test Promise</button><br>
+		<button onclick="checkBlocking()">Test browser responsive</button>
+	</body>
+</html>
